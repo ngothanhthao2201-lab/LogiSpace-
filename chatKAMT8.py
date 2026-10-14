@@ -259,11 +259,11 @@ html_code = """
                                <input type="date" v-model="tempShipment.bookingDate" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
                            </div>
                            <div>
-                               <label class="text-slate-400 block mb-1">ETD Thực Tế</label>
+                               <label class="text-slate-400 block mb-1">ETD</label>
                                <input type="date" v-model="tempShipment.etd" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
                            </div>
                            <div>
-                               <label class="text-slate-400 block mb-1">ETA Los Angeles</label>
+                               <label class="text-slate-400 block mb-1">ETA</label>
                                <input type="date" v-model="tempShipment.eta" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
                            </div>
                        </div>
