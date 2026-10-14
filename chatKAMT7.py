@@ -1,0 +1,245 @@
+import streamlit as st
+
+st.set_page_config(
+    page_title="LogiSpace Simulator — Freight Quotation & Space Intelligence Platform",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# === CSS TÙY CHỈNH FULL MÀN HÌNH VÀ ẨN MENU STREAMLIT ===
+st.markdown("""
+    <style>
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+        
+       .block-container {
+            padding-top: 0rem !important;
+            padding-bottom: 0rem !important;
+            padding-left: 0rem !important;
+            padding-right: 0rem !important;
+            max-width: 100% !important;
+        }
+        
+        .stApp {
+            margin: 0px;
+            background-color: #0f172a;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+html_code = """
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogiSpace Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        html, body {
+            width: 100%; height: 100%; margin: 0; padding: 0; background-color: #0f172a; 
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen">
+    <div id="app" class="flex flex-col min-h-screen w-full">
+        
+        <!-- HEADER -->
+        <header class="border-b border-slate-800 bg-slate-950/90 backdrop-blur sticky top-0 z-50 w-full px-6 py-3">
+            <div class="w-full flex flex-col md:flex-row justify-between items-center gap-3">
+               <div class="flex items-center gap-3">
+                  <div class="bg-blue-600 text-white p-2.5 rounded-xl font-bold shadow-lg shadow-blue-600/30">
+                      <i class="fa-solid fa-ship"></i>
+                  </div>
+                  <div>
+                      <h1 class="font-bold text-base md:text-lg leading-none text-blue-400">LogiSpace Simulator</h1>
+                      <span class="text-xs text-slate-400">Freight Quotation & Space Intelligence Platform</span>
+                  </div>
+               </div>
+               
+               <div class="flex flex-wrap items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
+                  <button @click="currentTab = 'dashboard'" :class="currentTab === 'dashboard' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition">
+                      <i class="fa-solid fa-chart-pie mr-1"></i> Dashboard
+                  </button>
+<button @click="currentTab = 'shipmentForm'" :class="currentTab === 'shipmentForm' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition">
+                      <i class="fa-solid fa-pen-to-square mr-1"></i> Thông Tin Lô Hàng
+                  </button>
+                  <button @click="currentTab = 'quotation'" :class="currentTab === 'quotation' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition">
+                      <i class="fa-solid fa-calculator mr-1"></i> Báo Giá & Biên Lãi
+                  </button>
+                  <button @click="currentTab = 'spaceForecast'" :class="currentTab === 'spaceForecast' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition">
+                      <i class="fa-solid fa-shield-halved mr-1"></i> Dự Báo Space
+                  </button>
+                  <button @click="currentTab = 'peakSeason'" :class="currentTab === 'peakSeason' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition">
+                      <i class="fa-solid fa-triangle-exclamation mr-1"></i> Mùa Cao Điểm Thuế
+                  </button>
+                  <button @click="currentTab = 'marketplace'" :class="currentTab === 'marketplace' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition">
+                      <i class="fa-solid fa-right-left mr-1"></i> Sàn Slot Marketplace
+                  </button>
+               </div>
+            </div>
+        </header>
+
+        <main class="flex-1 w-full p-4 md:p-6 space-y-6">
+            <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-3 text-xs shadow-lg w-full">
+               <div class="flex items-center gap-3">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <div>
+                      <strong class="text-white">Trạng thái đồng bộ:</strong>
+                      <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">Đã nạp dữ liệu chuẩn (QA Furniture - Cái Mép / LAX)</span>
+                      (Cập nhật lúc: <span class="text-slate-300 font-mono">{{ lastUpdatedTime }}</span>).
+                  </div>
+               </div>
+               <div class="flex items-center gap-3">
+                  <button @click="resetToDefault" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1 rounded-lg transition font-medium">
+                      Đặt Lại Dữ Liệu Chuẩn
+                  </button>
+               </div>
+</div>
+
+            <!-- TAB 1: DASHBOARD -->
+            <div v-if="currentTab === 'dashboard'" class="space-y-6 w-full">
+               <div class="grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
+                  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-lg">
+                      <div class="text-xs text-slate-400 mb-1">Quy Mô Lô Hàng</div>
+                      <div class="text-2xl font-bold text-white">{{ shipment.volume }} x {{ shipment.containerType }}</div>
+                      <div class="text-[11px] text-blue-400 mt-2">Tuyến: {{ shipment.pol }} → {{ shipment.pod }}</div>
+                  </div>
+                  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-lg">
+                      <div class="text-xs text-slate-400 mb-1">Biên Lợi Nhuận Gộp Thực Tế</div>
+                      <div class="text-2xl font-bold text-amber-400">3.8%</div>
+                      <div class="text-[11px] text-slate-400 mt-2">Mục tiêu chuẩn: {{ targetMargin }}% (Nhạy cảm chi phí)</div>
+                  </div>
+                  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-lg">
+                      <div class="text-xs text-slate-400 mb-1">Rủi Ro Trễ Tàu (Rolling Risk)</div>
+                      <div class="text-2xl font-bold text-rose-400">+2 Ngày Chậm</div>
+                      <div class="text-[11px] text-slate-400 mt-2">ETD kế hoạch: {{ shipment.etd }}</div>
+                  </div>
+                  <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-lg">
+                      <div class="text-xs text-slate-400 mb-1">Slot Sẵn Sàng Trên Sàn</div>
+                      <div class="text-2xl font-bold text-emerald-400">{{ filteredMarketplaceList.length }} Tin Đăng</div>
+                      <div class="text-[11px] text-slate-400 mt-2">Giải pháp bù đắp thiếu hụt space</div>
+                  </div>
+               </div>
+
+               <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+                  <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 shadow-xl space-y-4">
+                      <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                          <i class="fa-solid fa-bolt text-amber-400"></i> Hồ Sơ Lô Hàng Đang Khảo Sát
+                      </h3>
+                      <div class="space-y-2 text-xs text-slate-300">
+                          <div><strong>Shipper / Consignee:</strong> {{ shipment.shipper }} / {{ shipment.consignee }}</div>
+                          <div><strong>Mặt hàng:</strong> {{ shipment.commodity }}</div>
+                          <div><strong>Booking / MBL:</strong> 039FX49604 | <strong>Vessel:</strong> WAN HAI A01 E012</div>
+                          <div><strong>Ngày Book (Booking Date):</strong> {{ shipment.bookingDate }}</div>
+<div class="p-3 mt-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300">
+                               <i class="fa-solid fa-triangle-exclamation mr-1"></i> 
+                               Cảnh báo: Yêu cầu giữ chỗ đồng thời số lượng lớn đối mặt rủi ro thiếu space trầm trọng do làn sóng đẩy hàng trước chính sách thuế quan.
+                          </div>
+                      </div>
+                  </div>
+
+                  <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 shadow-xl space-y-4">
+                      <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                          <i class="fa-solid fa-circle-info text-blue-400"></i> Hướng Dẫn Sử Dụng Nút Cập Nhật
+                      </h3>
+                      <p class="text-xs text-slate-300 leading-relaxed">
+                          Truy cập tab <strong>Thông Tin Lô Hàng</strong> để thay đổi cảng, loại container hoặc số lượng. Sau đó nhấn nút <strong>“Hoàn thành và cập nhật dữ liệu”</strong> để toàn bộ hệ thống tính toán lại giá mua, giá bán, biên lãi và rủi ro theo đúng quy trình kiểm thử nghiệp vụ Sales Forwarding.
+                      </p>
+                  </div>
+               </div>
+            </div>
+
+            <!-- TAB 2: FORM THÔNG TIN LÔ HÀNG -->
+            <div v-if="currentTab === 'shipmentForm'" class="spac
+<button @click="currentTab = 'shipmentForm'" :class="currentTab === 'shipmentForm' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition">
+                       <i class="fa-solid fa-pen-to-square mr-1"></i> Thông Tin Lô Hàng
+                   </button>
+                   <button @click="currentTab = 'quotation'" :class="currentTab === 'quotation' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition">
+                       <i class="fa-solid fa-calculator mr-1"></i> Báo Giá & Biên Lãi
+                   </button>
+                   <button @click="currentTab = 'spaceForecast'" :class="currentTab === 'spaceForecast' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition">
+                       <i class="fa-solid fa-shield-halved mr-1"></i> Dự Báo Space
+                   </button>
+                   <button @click="currentTab = 'peakSeason'" :class="currentTab === 'peakSeason' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition">
+                       <i class="fa-solid fa-triangle-exclamation mr-1"></i> Mùa Cao Điểm Thuế
+                   </button>
+                   <button @click="currentTab = 'marketplace'" :class="currentTab === 'marketplace' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'" class="px-3 py-1.5 rounded-lg text-xs font-medium transition">
+                       <i class="fa-solid fa-right-left mr-1"></i> Sàn Slot Marketplace
+                   </button>
+               </div>
+            </div>
+        </header>
+
+        <main class="flex-1 w-full p-4 md:p-6 space-y-6">
+            <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-3 text-xs shadow-lg w-full">
+               <div class="flex items-center gap-3">
+                   <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                   <div>
+                       <strong class="text-white">Trạng thái đồng bộ:</strong>
+                       <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">Đã nạp dữ liệu chuẩn (QA Furniture - Cái Mép / LAX)</span>
+                       (Cập nhật lúc: <span class="text-slate-300 font-mono">{{ lastUpdatedTime }}</span>).
+                   </div>
+               </div>
+               <div class="flex items-center gap-3">
+                   <button @click="resetToDefault" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1 rounded-lg transition font-medium">
+                       Đặt Lại Dữ Liệu Chuẩn
+                   </button>
+</div>
+            </div>
+
+            <!-- TAB 1: DASHBOARD -->
+            <div v-if="currentTab === 'dashboard'" class="space-y-6 w-full">
+               <div class="grid grid-cols-1 md:grid-cols-4 gap-4 w-full">
+                   <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-lg">
+                       <div class="text-xs text-slate-400 mb-1">Quy Mô Lô Hàng</div>
+                       <div class="text-2xl font-bold text-white">{{ shipment.volume }} x {{ shipment.containerType }}</div>
+                       <div class="text-[11px] text-blue-400 mt-2">Tuyến: {{ shipment.pol }} → {{ shipment.pod }}</div>
+                   </div>
+                   <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-lg">
+                       <div class="text-xs text-slate-400 mb-1">Biên Lợi Nhuận Gộp Thực Tế</div>
+                       <div class="text-2xl font-bold text-amber-400">3.8%</div>
+                       <div class="text-[11px] text-slate-400 mt-2">Mục tiêu chuẩn: {{ targetMargin }}% (Nhạy cảm chi phí)</div>
+                   </div>
+                   <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-lg">
+                       <div class="text-xs text-slate-400 mb-1">Rủi Ro Trễ Tàu (Rolling Risk)</div>
+                       <div class="text-2xl font-bold text-rose-400">+2 Ngày Chậm</div>
+                       <div class="text-[11px] text-slate-400 mt-2">ETD kế hoạch: {{ shipment.etd }}</div>
+                   </div>
+                   <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-lg">
+                       <div class="text-xs text-slate-400 mb-1">Slot Sẵn Sàng Trên Sàn</div>
+                       <div class="text-2xl font-bold text-emerald-400">{{ filteredMarketplaceList.length }} Tin Đăng</div>
+                       <div class="text-[11px] text-slate-400 mt-2">Giải pháp bù đắp thiếu hụt space</div>
+                   </div>
+               </div>
+
+               <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+                   <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-5 shadow-xl space-y-4">
+                       <h3 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+                           <i class="fa-solid fa-bolt text-amber-400"></i> Hồ Sơ Lô Hàng Đang Khảo Sát
+                       </h3>
+                       <div class="space-y-2 text-xs text-slate-300">
+                           <div><strong>Shipper / Consignee:</strong> {{ shipment.shipper }} / {{ shipment.consignee }}</div>
+                           <div><strong>Mặt hàng:</strong> {{ shipment.commodity }}</div>
+                           <div><strong>Booking / MBL:</strong> 039FX49604 | <strong>Vessel:</strong> WAN HAI A01 E012</div>
+this.tempShipment = JSON.parse(JSON.stringify(this.shipment));
+                    this.carriers.forEach(carrier => {
+                        carrier.etd = this.shipment.etd;
+                    });
+                    this.lastUpdatedTime = new Date().toLocaleTimeString();
+                    alert('Đã khôi phục dữ liệu mẫu chuẩn.');
+                },
+                claimSlot(slot) {
+                    alert(`Đã gửi yêu cầu giữ ${slot.slots} slot từ ${slot.provider} thành công!`);
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
+"""
+
+st.components.v1.html(html_code, height=980, scrolling=True)
