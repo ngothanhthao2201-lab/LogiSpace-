@@ -185,9 +185,10 @@ html_code = """
                            <div>
                                <label class="text-slate-400 block mb-1">Cảng Đi (POL)</label>
                                <select v-model="tempShipment.pol" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
-                                   <option value="Cái Mép TCIT (VNVUT)">Cái Mép TCIT (VNVUT)</option>
+                                   <option value="Cái Mép (VNTOT)">Cái Mép (VNTOT)</option>
                                    <option value="Cát Lái (VNCLI)">Cát Lái (VNCLI)</option>
                                    <option value="Hải Phòng (VNHPH)">Hải Phòng (VNHPH)</option>
+                                   <option value="Sài Gòn (VNSGN)">Sài Gòn (VNSGN)</option>
                                </select>
                            </div>
                            <div>
@@ -195,6 +196,9 @@ html_code = """
                                <select v-model="tempShipment.pod" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
                                    <option value="Los Angeles, CA (USLAX)">Los Angeles, CA (USLAX)</option>
                                    <option value="Long Beach, CA (USLGB)">Long Beach, CA (USLGB)</option>
+                                   <option value="New York, NY/NJ (USNYC)">New York, NY/NJ (USNYC)</option>
+                                   <option value="Norfolk, VA (USORF)">Norfolk, VA (USORF)</option>
+                                   <option value="Savannah, GA (USSAV)">Savannah, GA (USSAV)</option> 
                                </select>
                            </div>
                            <div>
@@ -212,6 +216,12 @@ html_code = """
                                        <option value="40'HC">40'HC</option>
                                        <option value="40'GP">40'GP</option>
                                        <option value="20'GP">20'GP</option>
+                                       <option value="45'HC">45'HC (High Cube)</option>
+                                       <option value="40'RF">40'RF (Reefer - Lạnh)</option>
+                                       <option value="20'RF">20'RF (Reefer - Lạnh)</option>
+                                       <option value="40'OT">40'OT (Open Top)</option>
+                                       <option value="20'OT">20'OT (Open Top)</option>
+                                       <option value="40'FR">40'FR (Flat Rack)</option>
                                    </select>
                                </div>
                                <div>
@@ -225,6 +235,15 @@ html_code = """
                                    <option value="Wan Hai Lines">Wan Hai Lines</option>
                                    <option value="Evergreen Line">Evergreen Line</option>
                                    <option value="COSCO Shipping">COSCO Shipping</option>
+                                   <option value="Maersk Line">Maersk Line</option>
+                                   <option value="MSC (Mediterranean Shipping Company)">MSC</option>
+                                   <option value="CMA CGM">CMA CGM</option>
+                                   <option value="Hapag-Lloyd">Hapag-Lloyd</option>
+                                   <option value="ONE (Ocean Network Express)">ONE</option>
+                                   <option value="Yang Ming">Yang Ming</option>
+                                   <option value="HMM">HMM (Hyundai Merchant Marine)</option>
+                                   <option value="PIL (Pacific International Lines)">PIL</option>
+                                   <option value="SITC">SITC</option>
                                </select>
                            </div>
                            <div>
@@ -446,7 +465,7 @@ html_code = """
                             name: 'Wan Hai Lines',
                             code: 'WHL',
                             vessel: 'WAN HAI A01 E012',
-                            etd: '202-10-15',
+                            etd: '2025-10-15',
                             delayDays: 2,
                             oceanFreight: 5230,
                             thc: 200,
