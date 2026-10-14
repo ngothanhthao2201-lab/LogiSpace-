@@ -154,128 +154,133 @@ html_code = """
             </div>
 
             <!-- TAB 2: FORM THÔNG TIN LÔ HÀNG -->
-            <div v-if="currentTab === 'shipmentForm'" class="space-y-6 w-full">
-               <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-xl space-y-5 w-full">
-                   <div class="flex justify-between items-center pb-3 border-b border-slate-700/60">
-                       <h3 class="text-base font-bold text-blue-400 flex items-center gap-2">
-                           <i class="fa-solid fa-pen-to-square"></i> Chỉnh Sửa Thông Tin Lô Hàng
-                       </h3>
-                       <span class="text-xs text-slate-400">Đồng bộ hóa toàn hệ thống sau khi xác nhận</span>
+<div v-if="currentTab === 'shipmentForm'" class="space-y-6 w-full">
+   <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-xl space-y-5 w-full">
+       <div class="flex justify-between items-center pb-3 border-b border-slate-700/60">
+           <h3 class="text-base font-bold text-blue-400 flex items-center gap-2">
+               <i class="fa-solid fa-pen-to-square"></i> Chỉnh Sửa Thông Tin Lô Hàng
+           </h3>
+           <span class="text-xs text-slate-400">Đồng bộ hóa toàn hệ thống sau khi xác nhận</span>
+       </div>
+
+       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+
+           <!-- 1. CÁC BÊN LIÊN QUAN -->
+           <div class="space-y-3 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
+               <div class="font-semibold text-slate-200 border-b border-slate-700 pb-1">1. Các Bên Liên Quan</div>
+               <div>
+                   <label class="text-slate-400 block mb-1">Shipper</label>
+                   <input type="text" v-model="shipment.shipper" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
+               </div>
+               <div>
+                   <label class="text-slate-400 block mb-1">Consignee</label>
+                   <input type="text" v-model="shipment.consignee" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
+               </div>
+               <div>
+                   <label class="text-slate-400 block mb-1">Sales Phụ Trách</label>
+                   <input type="text" v-model="shipment.salesPerson" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
+               </div>
+           </div>
+
+           <!-- 2. TUYẾN VẬN TẢI -->
+           <div class="space-y-3 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
+               <div class="font-semibold text-slate-200 border-b border-slate-700 pb-1">2. Tuyến Vận Tải (POL / POD)</div>
+               <div>
+                   <label class="text-slate-400 block mb-1">Cảng Đi (POL)</label>
+                   <select v-model="shipment.pol" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
+                       <option value="Cái Mép TCIT (VNVUT)">Cái Mép TCIT (VNVUT)</option>
+                       <option value="Cát Lái (VNCLI)">Cát Lái (VNCLI)</option>
+                       <option value="Hải Phòng (VNHPH)">Hải Phòng (VNHPH)</option>
+                       <option value="Sài Gòn (VNSGN)">Sài Gòn (VNSGN)</option>
+                   </select>
+               </div>
+               <div>
+                   <label class="text-slate-400 block mb-1">Cảng Đến (POD)</label>
+                   <select v-model="shipment.pod" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
+                       <option value="Los Angeles, CA (USLAX)">Los Angeles, CA (USLAX)</option>
+                       <option value="Long Beach, CA (USLGB)">Long Beach, CA (USLGB)</option>
+                       <option value="New York, NY/NJ (USNYC)">New York, NY/NJ (USNYC)</option>
+                       <option value="Norfolk, VA (USORF)">Norfolk, VA (USORF)</option>
+                       <option value="Savannah, GA (USSAV)">Savannah, GA (USSAV)</option>
+                   </select>
+               </div>
+               <div>
+                   <label class="text-slate-400 block mb-1">Loại Hàng Hóa</label>
+                   <input type="text" v-model="shipment.commodity" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
+               </div>
+           </div>
+
+           <!-- 3. QUY MÔ & CONTAINER -->
+           <div class="space-y-3 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
+               <div class="font-semibold text-slate-200 border-b border-slate-700 pb-1">3. Quy Mô & Container</div>
+               <div class="grid grid-cols-2 gap-2">
+                   <div>
+                       <label class="text-slate-400 block mb-1">Loại Cont</label>
+                       <select v-model="shipment.containerType" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
+                           <option value="40'HC">40'HC</option>
+                           <option value="40'GP">40'GP</option>
+                           <option value="20'GP">20'GP</option>
+                           <option value="45'HC">45'HC (High Cube)</option>
+                           <option value="40'RF">40'RF (Reefer - Lạnh)</option>
+                           <option value="20'RF">20'RF (Reefer - Lạnh)</option>
+                           <option value="40'OT">40'OT (Open Top)</option>
+                           <option value="20'OT">20'OT (Open Top)</option>
+                           <option value="40'FR">40'FR (Flat Rack)</option>
+                       </select>
                    </div>
-
-                   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-                       <div class="space-y-3 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
-                           <div class="font-semibold text-slate-200 border-b border-slate-700 pb-1">1. Các Bên Liên Quan</div>
-                           <div>
-                               <label class="text-slate-400 block mb-1">Shipper</label>
-                               <input type="text" v-model="tempShipment.shipper" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
-                           </div>
-                           <div>
-                               <label class="text-slate-400 block mb-1">Consignee</label>
-                               <input type="text" v-model="tempShipment.consignee" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
-                           </div>
-                           <div>
-                               <label class="text-slate-400 block mb-1">Sales Phụ Trách</label>
-                               <input type="text" v-model="tempShipment.salesPerson" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
-                           </div>
-                       </div>
-
-                       <div class="space-y-3 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
-                           <div class="font-semibold text-slate-200 border-b border-slate-700 pb-1">2. Tuyến Vận Tải (POL / POD)</div>
-                           <div>
-                               <label class="text-slate-400 block mb-1">Cảng Đi (POL)</label>
-                               <select v-model="tempShipment.pol" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
-                                   <option value="Cái Mép TCIT (VNVUT)">Cái Mép TCIT (VNVUT)</option>
-                                   <option value="Cát Lái (VNCLI)">Cát Lái (VNCLI)</option>
-                                   <option value="Hải Phòng (VNHPH)">Hải Phòng (VNHPH)</option>
-                                   <option value="Sài Gòn (VNSGN)">Sài Gòn (VNSGN)</option>
-                               </select>
-                           </div>
-                           <div>
-                               <label class="text-slate-400 block mb-1">Cảng Đến (POD)</label>
-                               <select v-model="tempShipment.pod" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
-                                   <option value="Los Angeles, CA (USLAX)">Los Angeles, CA (USLAX)</option>
-                                   <option value="Long Beach, CA (USLGB)">Long Beach, CA (USLGB)</option>
-                                   <option value="New York, NY/NJ (USNYC)">New York, NY/NJ (USNYC)</option>
-                                   <option value="Norfolk, VA (USORF)">Norfolk, VA (USORF)</option>
-                                   <option value="Savannah, GA (USSAV)">Savannah, GA (USSAV)</option> 
-                               </select>
-                           </div>
-                           <div>
-                               <label class="text-slate-400 block mb-1">Loại Hàng Hóa</label>
-                               <input type="text" v-model="tempShipment.commodity" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
-                           </div>
-                       </div>
-
-                       <div class="space-y-3 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
-                           <div class="font-semibold text-slate-200 border-b border-slate-700 pb-1">3. Quy Mô & Container</div>
-                           <div class="grid grid-cols-2 gap-2">
-                               <div>
-                                   <label class="text-slate-400 block mb-1">Loại Cont</label>
-                                   <select v-model="tempShipment.containerType" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
-                                       <option value="40'HC">40'HC</option>
-                                       <option value="40'GP">40'GP</option>
-                                       <option value="20'GP">20'GP</option>
-                                       <option value="45'HC">45'HC (High Cube)</option>
-                                       <option value="40'RF">40'RF (Reefer - Lạnh)</option>
-                                       <option value="20'RF">20'RF (Reefer - Lạnh)</option>
-                                       <option value="40'OT">40'OT (Open Top)</option>
-                                       <option value="20'OT">20'OT (Open Top)</option>
-                                       <option value="40'FR">40'FR (Flat Rack)</option>
-                                   </select>
-                               </div>
-                               <div>
-                                   <label class="text-slate-400 block mb-1">Số Lượng</label>
-                                   <input type="number" min="1" max="100" v-model.number="tempShipment.volume" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-amber-400 font-bold">
-                               </div>
-                           </div>
-                           <div>
-                               <label class="text-slate-400 block mb-1">Hãng Tàu</label>
-                               <select v-model="tempShipment.preferredCarrier" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
-                                   <option value="Wan Hai Lines">Wan Hai Lines</option>
-                                   <option value="Evergreen Line">Evergreen Line</option>
-                                   <option value="COSCO Shipping">COSCO Shipping</option>
-                                   <option value="Maersk Line">Maersk Line</option>
-                                   <option value="MSC (Mediterranean Shipping Company)">MSC</option>
-                                   <option value="CMA CGM">CMA CGM</option>
-                                   <option value="Hapag-Lloyd">Hapag-Lloyd</option>
-                                   <option value="ONE (Ocean Network Express)">ONE</option>
-                                   <option value="Yang Ming">Yang Ming</option>
-                                   <option value="HMM">HMM (Hyundai Merchant Marine)</option>
-                                   <option value="PIL (Pacific International Lines)">PIL</option>
-                                   <option value="SITC">SITC</option>
-                               </select>
-                           </div>
-                           <div>
-                               <label class="text-slate-400 block mb-1">Mục Tiêu Biên Lãi (%)</label>
-                               <input type="number" min="1" max="50" v-model.number="targetMargin" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-blue-400 font-bold">
-                           </div>
-                       </div>
-
-                       <div class="space-y-3 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
-                           <div class="font-semibold text-slate-200 border-b border-slate-700 pb-1">4. Lịch Trình (ETD / ETA)</div>
-                           <div>
-                               <label class="text-slate-400 block mb-1">Ngày Book Chỗ</label>
-                               <input type="date" v-model="tempShipment.bookingDate" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
-                           </div>
-                           <div>
-                               <label class="text-slate-400 block mb-1">ETD</label>
-                               <input type="date" v-model="tempShipment.etd" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
-                           </div>
-                           <div>
-                               <label class="text-slate-400 block mb-1">ETA</label>
-                               <input type="date" v-model="tempShipment.eta" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
-                           </div>
-                       </div>
-                   </div>
-
-                   <div class="pt-4 border-t border-slate-700 flex justify-end gap-3">
-                       <button @click="commitShipmentUpdate" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg transition flex items-center gap-2">
-                           <i class="fa-solid fa-check"></i> Hoàn Thành Và Cập Nhật Dữ Liệu
-                       </button>
+                   <div>
+                       <label class="text-slate-400 block mb-1">Số Lượng</label>
+                       <input type="number" min="1" max="100" v-model.number="shipment.volume" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-amber-400 font-bold">
                    </div>
                </div>
-            </div>
+               <div>
+                   <label class="text-slate-400 block mb-1">Hãng Tàu</label>
+                   <select v-model="shipment.preferredCarrier" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
+                       <option value="Wan Hai Lines">Wan Hai Lines</option>
+                       <option value="Evergreen Line">Evergreen Line</option>
+                       <option value="COSCO Shipping">COSCO Shipping</option>
+                       <option value="Maersk Line">Maersk Line</option>
+                       <option value="MSC (Mediterranean Shipping Company)">MSC</option>
+                       <option value="CMA CGM">CMA CGM</option>
+                       <option value="Hapag-Lloyd">Hapag-Lloyd</option>
+                       <option value="ONE (Ocean Network Express)">ONE</option>
+                       <option value="Yang Ming">Yang Ming</option>
+                       <option value="HMM">HMM (Hyundai Merchant Marine)</option>
+                       <option value="PIL (Pacific International Lines)">PIL</option>
+                       <option value="SITC">SITC</option>
+                   </select>
+               </div>
+               <div>
+                   <label class="text-slate-400 block mb-1">Mục Tiêu Biên Lãi (%)</label>
+                   <input type="number" min="1" max="50" v-model.number="targetMargin" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-blue-400 font-bold">
+               </div>
+           </div>
+
+           <!-- 4. LỊCH TRÌNH -->
+           <div class="space-y-3 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
+               <div class="font-semibold text-slate-200 border-b border-slate-700 pb-1">4. Lịch Trình (ETD / ETA)</div>
+               <div>
+                   <label class="text-slate-400 block mb-1">Ngày Book Chỗ</label>
+                   <input type="date" v-model="shipment.bookingDate" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
+               </div>
+               <div>
+                   <label class="text-slate-400 block mb-1">ETD</label>
+                   <input type="date" v-model="shipment.etd" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
+               </div>
+               <div>
+                   <label class="text-slate-400 block mb-1">ETA</label>
+                   <input type="date" v-model="shipment.eta" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
+               </div>
+           </div>
+       </div>
+
+       <div class="pt-4 border-t border-slate-700 flex justify-end gap-3">
+           <button @click="commitShipmentUpdate" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg transition flex items-center gap-2">
+               <i class="fa-solid fa-check"></i> Hoàn Thành Và Cập Nhật Dữ Liệu
+           </button>
+       </div>
+   </div>
+</div>
 
                         <!-- TAB 3: BÁO GIÁ & BIÊN LÃI -->
             <div v-if="currentTab === 'quotation'" class="space-y-6 w-full">
