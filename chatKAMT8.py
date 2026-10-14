@@ -434,14 +434,14 @@ html_code = """
                     shipment: {
                         shipper: 'QA Furniture Co., Ltd (Bình Phước)',
                         consignee: 'MTA Cabinets LLC (Texas)',
-                        salesPerson: 'Tên',
+                        salesPerson: 'Nhập tên',
                         pol: 'Cái Mép TCIT (VNVUT)',
                         pod: 'Los Angeles, CA (USLAX)',
                         commodity: 'Wooden kitchen cabinets (HS 940340)',
                         containerType: "40'HC",
                         volume: 5,
                         preferredCarrier: 'Wan Hai Lines',
-                        bookingDate: 'yyyy-mm-dd',
+                        bookingDate: '2025-10-13',
                         etd: 'yyyy-mm-dd',
                         eta: 'yyyy-mm-dd'
                     },
@@ -455,7 +455,7 @@ html_code = """
                         containerType: "40'HC",
                         volume: 5,
                         preferredCarrier: 'Wan Hai Lines',
-                        bookingDate: '2025-10-13',
+                        bookingDate: 'yyyy-mm-dd',
                         etd: 'yyyy-mm-dd',
                         eta: 'yyyy-mm-dd'
                     },
@@ -521,7 +521,7 @@ html_code = """
                     this.shipment = {
                         shipper: 'QA Furniture Co., Ltd (Bình Phước)',
                         consignee: 'MTA Cabinets LLC (Texas)',
-                        salesPerson: 'Bắp (Sales Forwarding)',
+                        salesPerson: 'Nhập tên',
                         pol: 'Cái Mép TCIT (VNVUT)',
                         pod: 'Los Angeles, CA (USLAX)',
                         commodity: 'Wooden kitchen cabinets (HS 940340)',
