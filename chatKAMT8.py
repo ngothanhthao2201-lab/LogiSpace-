@@ -116,7 +116,7 @@ html_code = """
                    <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-lg">
                        <div class="text-xs text-slate-400 mb-1">Rủi Ro Trễ Tàu (Rolling Risk)</div>
                        <div class="text-2xl font-bold text-rose-400">+2 Ngày Chậm</div>
-                       <div class="text-[11px] text-slate-400 mt-2">ETD kế hoạch: {{ shipment.etd }}</div>
+                       <div class="text-[11px] text-slate-400 mt-2">ETD kế hoạch: 2025-10-15</div>
                    </div>
                    <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-lg">
                        <div class="text-xs text-slate-400 mb-1">Slot Sẵn Sàng Trên Sàn</div>
@@ -158,7 +158,7 @@ html_code = """
                <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-xl space-y-5 w-full">
                    <div class="flex justify-between items-center pb-3 border-b border-slate-700/60">
                        <h3 class="text-base font-bold text-blue-400 flex items-center gap-2">
-                           <i class="fa-solid fa-pen-to-square"></i> Cấu Hình & Chỉnh Sửa Thông Tin Lô Hàng (Input Trung Tâm)
+                           <i class="fa-solid fa-pen-to-square"></i> Chỉnh Sửa Thông Tin Lô Hàng
                        </h3>
                        <span class="text-xs text-slate-400">Đồng bộ hóa toàn hệ thống sau khi xác nhận</span>
                    </div>
