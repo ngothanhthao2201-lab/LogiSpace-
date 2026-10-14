@@ -423,8 +423,8 @@ html_code = """
                         volume: 5,
                         preferredCarrier: 'Wan Hai Lines',
                         bookingDate: '2026-10-13',
-                        etd: '2026-10-15',
-                        eta: '2026-10-30'
+                        etd: '2025-10-15',
+                        eta: '2025-10-30'
                     },
                     tempShipment: {
                         shipper: 'QA Furniture Co., Ltd (Bình Phước)',
@@ -437,8 +437,8 @@ html_code = """
                         volume: 5,
                         preferredCarrier: 'Wan Hai Lines',
                         bookingDate: '2026-10-13',
-                        etd: '2026-10-15',
-                        eta: '2026-10-30'
+                        etd: '2025-10-15',
+                        eta: '2025-10-30'
                     },
                     carriers: [
                         {
@@ -510,8 +510,8 @@ html_code = """
                         volume: 5,
                         preferredCarrier: 'Wan Hai Lines',
                         bookingDate: '2026-10-13',
-                        etd: '2026-10-15',
-                        eta: '2026-10-30'
+                        etd: '2025-10-15',
+                        eta: '2025-10-30'
                     };
                     this.tempShipment = JSON.parse(JSON.stringify(this.shipment));
                     this.carriers.forEach(carrier => {
