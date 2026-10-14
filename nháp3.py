@@ -293,10 +293,10 @@ html_code = """
 
                    <div class="space-y-4 w-full">
                        <div v-if="evaluatedCarriers.length === 0" class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
-                           Chưa có bảng giá mô phỏng cho tổ hợp này. Vui lòng chọn POD là Los Angeles hoặc Long Beach và loại cont 40'HC hoặc 20'GP.
+                           Chưa có báo giá. Hãy nhập thông tin lô hàng và nhấn Hoàn Thành Và Cập Nhật Dữ Liệu.
                        </div>
 
-                       <div v-for="(carrier, index) in evaluatedCarriers" :key="carrier.id" class="bg-slate-900/70 border border-slate-700/80 rounded-xl p-4 space-y-3 w-full">
+                       <div v-for="(carrier, index) in evaluatedCarriers" :key="carrier.name" :class="carrier.name === shipment.preferredCarrier ? 'border-blue-500/70 ring-1 ring-blue-500/40' : 'border-slate-700/80'" class="bg-slate-900/70 border rounded-xl p-4 space-y-3 w-full">
                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center font-bold text-slate-200 border border-slate-700">
@@ -306,6 +306,7 @@ html_code = """
                                         <div class="font-semibold text-slate-100 flex items-center gap-2">
                                             {{ carrier.name }}
                                            <span class="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded border border-blue-500/30">{{ carrier.vessel }}</span>
+                                           <span v-if="carrier.name === shipment.preferredCarrier" class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">Hãng đã chọn</span>
                                         </div>
                                         <div class="text-xs text-slate-400 mt-0.5">
                                             ETD kế hoạch: <strong class="text-slate-200">{{ carrier.etd }}</strong>
@@ -464,24 +465,52 @@ html_code = """
                     shipment: JSON.parse(JSON.stringify(DEFAULT_SHIPMENT)),
                     tempShipment: JSON.parse(JSON.stringify(DEFAULT_SHIPMENT)),
 
-                    // Danh sách báo giá, được tính từ rateCard bởi buildCarriers() (xem created())
+                    // Danh sách báo giá, được tính từ bảng giá mô phỏng bởi buildCarriers() (xem created())
                     carriers: [],
 
-                    // BẢNG GIÁ MÔ PHỎNG: Wan Hai / 40'HC / LAX (O/F 5230) là số của case study,
-                    // các dòng còn lại là giả định. delayMin/delayMax = dải trễ tàu theo độ tin cậy lịch tàu.
-                    rateCard: [
-                        { carrier: 'Wan Hai Lines',  code: 'WHL', vessel: 'WAN HAI A01 E012',  delayMin: 1, delayMax: 4, pod: 'Los Angeles, CA (USLAX)', cont: "40'HC", of: 5230 },
-                        { carrier: 'Wan Hai Lines',  code: 'WHL', vessel: 'WAN HAI A01 E012',  delayMin: 1, delayMax: 4, pod: 'Long Beach, CA (USLGB)',  cont: "40'HC", of: 5230 },
-                        { carrier: 'Wan Hai Lines',  code: 'WHL', vessel: 'WAN HAI A01 E012',  delayMin: 1, delayMax: 4, pod: 'Los Angeles, CA (USLAX)', cont: "20'GP", of: 2900 },
+                    // ===== BẢNG GIÁ MÔ PHỎNG (rate card) =====
+                    // Cước biển = giá nền + phụ thu theo hãng + phụ thu theo POD + phụ thu theo loại cont + phụ thu theo POL
+                    // Giá nền 5230 USD = Wan Hai / 40'HC / Cái Mép -> LAX (số thật của case study). Các số còn lại là giả định.
+                    baseOceanFreight: 5230,
 
-                        { carrier: 'Evergreen Line', code: 'EGL', vessel: 'EVER ABLE 012E',    delayMin: 0, delayMax: 2, pod: 'Los Angeles, CA (USLAX)', cont: "40'HC", of: 5200 },
-                        { carrier: 'Evergreen Line', code: 'EGL', vessel: 'EVER ABLE 012E',    delayMin: 0, delayMax: 2, pod: 'Long Beach, CA (USLGB)',  cont: "40'HC", of: 5200 },
-                        { carrier: 'Evergreen Line', code: 'EGL', vessel: 'EVER ABLE 012E',    delayMin: 0, delayMax: 2, pod: 'Los Angeles, CA (USLAX)', cont: "20'GP", of: 2850 },
-
-                        { carrier: 'COSCO Shipping', code: 'COS', vessel: 'COSCO FAITH 045E',  delayMin: 2, delayMax: 6, pod: 'Los Angeles, CA (USLAX)', cont: "40'HC", of: 5180 },
-                        { carrier: 'COSCO Shipping', code: 'COS', vessel: 'COSCO FAITH 045E',  delayMin: 2, delayMax: 6, pod: 'Long Beach, CA (USLGB)',  cont: "40'HC", of: 5180 },
-                        { carrier: 'COSCO Shipping', code: 'COS', vessel: 'COSCO FAITH 045E',  delayMin: 2, delayMax: 6, pod: 'Los Angeles, CA (USLAX)', cont: "20'GP", of: 2800 }
+                    // Hồ sơ từng hãng: chênh lệch giá so với Wan Hai (USD), dải trễ tàu (ngày), biên lãi bán mô phỏng (%)
+                    carrierProfiles: [
+                        { name: 'Wan Hai Lines',                        code: 'WHL', vessel: 'WAN HAI A01 E012',  adj:    0, delayMin: 1, delayMax: 4, sellMargin: 3.8 },
+                        { name: 'Evergreen Line',                       code: 'EGL', vessel: 'EVER ABLE 012E',    adj:  -30, delayMin: 0, delayMax: 2, sellMargin: 4.5 },
+                        { name: 'COSCO Shipping',                       code: 'COS', vessel: 'COSCO FAITH 045E',  adj:  -50, delayMin: 2, delayMax: 6, sellMargin: 3.2 },
+                        { name: 'Maersk Line',                          code: 'MSK', vessel: 'MAERSK EINDHOVEN',  adj:  170, delayMin: 0, delayMax: 2, sellMargin: 6.0 },
+                        { name: 'MSC (Mediterranean Shipping Company)', code: 'MSC', vessel: 'MSC AURORA 531W',   adj:   90, delayMin: 1, delayMax: 5, sellMargin: 4.0 },
+                        { name: 'CMA CGM',                              code: 'CMA', vessel: 'CMA CGM TAGE',      adj:  120, delayMin: 1, delayMax: 4, sellMargin: 4.8 },
+                        { name: 'Hapag-Lloyd',                          code: 'HPL', vessel: 'HAPAG BERLIN 220E', adj:  150, delayMin: 0, delayMax: 3, sellMargin: 5.5 },
+                        { name: 'ONE (Ocean Network Express)',          code: 'ONE', vessel: 'ONE HARMONY 078E',  adj:   60, delayMin: 1, delayMax: 3, sellMargin: 4.2 },
+                        { name: 'Yang Ming',                            code: 'YML', vessel: 'YM WELLNESS 031E',  adj:   20, delayMin: 1, delayMax: 4, sellMargin: 3.6 },
+                        { name: 'HMM',                                  code: 'HMM', vessel: 'HMM ALGECIRAS',     adj:   40, delayMin: 1, delayMax: 4, sellMargin: 4.1 },
+                        { name: 'PIL (Pacific International Lines)',    code: 'PIL', vessel: 'KOTA LAMBANG 017E', adj:  -20, delayMin: 2, delayMax: 5, sellMargin: 3.4 },
+                        { name: 'SITC',                                 code: 'STC', vessel: 'SITC KEELUNG 066E', adj:  -40, delayMin: 1, delayMax: 5, sellMargin: 3.3 }
                     ],
+
+                    // Phụ thu theo cảng đến (USD, so với LAX)
+                    podSurcharge: {
+                        'Los Angeles, CA (USLAX)': 0,
+                        'Long Beach, CA (USLGB)': 50,
+                        'New York, NY/NJ (USNYC)': 1800,
+                        'Norfolk, VA (USORF)': 1900,
+                        'Savannah, GA (USSAV)': 1700
+                    },
+
+                    // Phụ thu theo loại container (USD, so với 40'HC)
+                    contSurcharge: {
+                        "40'HC": 0, "40'GP": -150, "20'GP": -2300, "45'HC": 250,
+                        "40'RF": 2200, "20'RF": 1000, "40'OT": 600, "20'OT": -2000, "40'FR": 900
+                    },
+
+                    // Phụ thu theo cảng đi (USD, so với Cái Mép; cảng sông phải đi feeder ra Cái Mép)
+                    polSurcharge: {
+                        'Cái Mép TCIT (VNVUT)': 0,
+                        'Cát Lái (VNCLI)': 150,
+                        'Sài Gòn (VNSGN)': 150,
+                        'Hải Phòng (VNHPH)': 300
+                    },
 
                     marketplaceList: [
                         { id: 201, provider: 'VinaFreighter Partner', carrier: 'Evergreen', route: 'Cái Mép TCIT → Los Angeles', pol: 'Cái Mép TCIT (VNVUT)', pod: 'Los Angeles, CA (USLAX)', etd: '2026-10-14', slots: 3, price: 5200 },
@@ -533,32 +562,47 @@ html_code = """
                 }
             },
             methods: {
-                // Tạo danh sách báo giá từ rateCard theo POD + loại cont của lô hàng hiện tại
+                // Tạo báo giá cho TẤT CẢ hãng tàu theo POL + POD + loại cont + số lượng của lô hàng hiện tại
                 buildCarriers() {
                     const s = this.shipment;
-                    const matched = this.rateCard.filter(r => r.pod === s.pod && r.cont === s.containerType);
+                    const is20 = s.containerType.startsWith('20');
 
-                    return matched.map((r, i) => {
-                        const thc = 200, sealDoc = 48, handlingPod = 90;   // phí cố định theo case study
-                        const cost = r.of + thc + sealDoc + handlingPod;
+                    const list = this.carrierProfiles.map((p, i) => {
+                        const oceanFreight = Math.max(500,
+                            this.baseOceanFreight
+                            + p.adj
+                            + (this.podSurcharge[s.pod] ?? 0)
+                            + (this.contSurcharge[s.containerType] ?? 0)
+                            + (this.polSurcharge[s.pol] ?? 0)
+                        );
+                        const thc = is20 ? 150 : 200;
+                        const sealDoc = 48;
+                        const handlingPod = is20 ? 70 : 90;
+                        const cost = oceanFreight + thc + sealDoc + handlingPod;
 
                         // Lô càng lớn càng dễ bị roll: số ngày trễ tăng theo số lượng cont (20 cont trở lên = mức tối đa)
-                        const volumeRatio = Math.min(s.volume / 20, 1);
-                        const delayDays = Math.round(r.delayMin + (r.delayMax - r.delayMin) * volumeRatio);
+                        const volumeRatio = Math.min((s.volume || 1) / 20, 1);
+                        const delayDays = Math.round(p.delayMin + (p.delayMax - p.delayMin) * volumeRatio);
 
                         return {
                             id: i + 1,
-                            name: r.carrier,
-                            code: r.code,
-                            vessel: r.vessel,
+                            name: p.name,
+                            code: p.code,
+                            vessel: p.vessel,
                             etd: s.etd,
-                            delayDays: delayDays,
-                            oceanFreight: r.of,
-                            thc, sealDoc, handlingPod,
+                            delayDays,
+                            oceanFreight, thc, sealDoc, handlingPod,
                             reserveFee: 0,
-                            // Giá bán mô phỏng: biên mỏng khoảng 3.8% (thấp hơn mục tiêu, đúng bối cảnh case study)
-                            currentSellRate: Math.ceil(cost / (1 - 0.038))
+                            currentSellRate: Math.ceil(cost / (1 - p.sellMargin / 100))
                         };
+                    });
+
+                    // Hãng đã chọn trong form lên đầu, các hãng còn lại sắp theo giá vốn tăng dần
+                    const costOf = c => c.oceanFreight + c.thc + c.sealDoc + c.handlingPod;
+                    return list.sort((a, b) => {
+                        if (a.name === s.preferredCarrier) return -1;
+                        if (b.name === s.preferredCarrier) return 1;
+                        return costOf(a) - costOf(b);
                     });
                 },
                 commitShipmentUpdate() {
