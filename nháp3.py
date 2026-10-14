@@ -91,6 +91,7 @@ html_code = """
                        <strong class="text-white">Trạng thái đồng bộ:</strong>
                        <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">Đã nạp dữ liệu chuẩn (QA Furniture - Cái Mép / LAX)</span>
                        (Cập nhật lúc: <span class="text-slate-300 font-mono">{{ lastUpdatedTime }}</span>).
+                       <span class="text-slate-400 ml-1">Dữ liệu giá và lịch tàu là mô phỏng phục vụ kiểm thử nghiệp vụ.</span>
                    </div>
                </div>
                <div class="flex items-center gap-3">
@@ -110,13 +111,16 @@ html_code = """
                    </div>
                    <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-lg">
                        <div class="text-xs text-slate-400 mb-1">Biên Lợi Nhuận Gộp Thực Tế</div>
-                       <div class="text-2xl font-bold text-amber-400">3.8%</div>
+                       <div class="text-2xl font-bold text-amber-400">{{ selectedCarrier ? selectedCarrier.marginPercent + '%' : '—' }}</div>
                        <div class="text-[11px] text-slate-400 mt-2">Mục tiêu chuẩn: {{ targetMargin }}% (Nhạy cảm chi phí)</div>
                    </div>
                    <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-lg">
                        <div class="text-xs text-slate-400 mb-1">Rủi Ro Trễ Tàu (Rolling Risk)</div>
-                       <div class="text-2xl font-bold text-rose-400">+2 Ngày Chậm</div>
-                       <div class="text-[11px] text-slate-400 mt-2">ETD kế hoạch: {{ shipment.etd }}</div>
+                       <div class="text-2xl font-bold text-rose-400">{{ selectedCarrier ? '+' + selectedCarrier.delayDays + ' Ngày Chậm' : '—' }}</div>
+                       <div class="text-[11px] text-slate-400 mt-2">
+                           ETD kế hoạch: {{ shipment.etd }}
+                           <span v-if="selectedCarrier"> → ETD dự kiến: {{ selectedCarrier.actualEtd }}</span>
+                       </div>
                    </div>
                    <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-lg">
                        <div class="text-xs text-slate-400 mb-1">Slot Sẵn Sàng Trên Sàn</div>
@@ -133,8 +137,8 @@ html_code = """
                        <div class="space-y-2 text-xs text-slate-300">
                            <div><strong>Shipper / Consignee:</strong> {{ shipment.shipper }} / {{ shipment.consignee }}</div>
                            <div><strong>Mặt hàng:</strong> {{ shipment.commodity }}</div>
-                           <div><strong>Booking / MBL:</strong> 039FX49604 | <strong>Vessel:</strong> WAN HAI A01 E012</div>
-                           <div><strong>Ngày Book (Booking Date):</strong> 2025-10-13</div>
+                           <div><strong>Booking / MBL:</strong> 039FX49604 | <strong>Vessel:</strong> {{ selectedCarrier ? selectedCarrier.vessel : 'WAN HAI A01 E012' }}</div>
+                           <div><strong>Ngày Book (Booking Date):</strong> {{ shipment.bookingDate }}</div>
                            <div class="p-3 mt-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300">
                                <i class="fa-solid fa-triangle-exclamation mr-1"></i> 
                                Cảnh báo: Yêu cầu giữ chỗ đồng thời số lượng lớn đối mặt rủi ro thiếu space trầm trọng do làn sóng đẩy hàng trước chính sách thuế quan.
@@ -158,7 +162,7 @@ html_code = """
                <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 shadow-xl space-y-5 w-full">
                    <div class="flex justify-between items-center pb-3 border-b border-slate-700/60">
                        <h3 class="text-base font-bold text-blue-400 flex items-center gap-2">
-                           <i class="fa-solid fa-pen-to-square"></i> Cấu Hình & Chỉnh Sửa Thông Tin Lô Hàng (Input Trung Tâm)
+                           <i class="fa-solid fa-pen-to-square"></i> Chỉnh Sửa Thông Tin Lô Hàng
                        </h3>
                        <span class="text-xs text-slate-400">Đồng bộ hóa toàn hệ thống sau khi xác nhận</span>
                    </div>
@@ -259,11 +263,11 @@ html_code = """
                                <input type="date" v-model="tempShipment.bookingDate" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
                            </div>
                            <div>
-                               <label class="text-slate-400 block mb-1">ETD Thực Tế</label>
+                               <label class="text-slate-400 block mb-1">ETD</label>
                                <input type="date" v-model="tempShipment.etd" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
                            </div>
                            <div>
-                               <label class="text-slate-400 block mb-1">ETA Los Angeles</label>
+                               <label class="text-slate-400 block mb-1">ETA</label>
                                <input type="date" v-model="tempShipment.eta" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
                            </div>
                        </div>
@@ -288,7 +292,11 @@ html_code = """
                    </div>
 
                    <div class="space-y-4 w-full">
-                       <div v-for="carrier in evaluatedCarriers" :key="carrier.id" class="bg-slate-900/70 border border-slate-700/80 rounded-xl p-4 space-y-3 w-full">
+                       <div v-if="evaluatedCarriers.length === 0" class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
+                           Chưa có bảng giá mô phỏng cho tổ hợp này. Vui lòng chọn POD là Los Angeles hoặc Long Beach và loại cont 40'HC hoặc 20'GP.
+                       </div>
+
+                       <div v-for="(carrier, index) in evaluatedCarriers" :key="carrier.id" class="bg-slate-900/70 border border-slate-700/80 rounded-xl p-4 space-y-3 w-full">
                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-lg bg-slate-800 flex items-center justify-center font-bold text-slate-200 border border-slate-700">
@@ -300,7 +308,9 @@ html_code = """
                                            <span class="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded border border-blue-500/30">{{ carrier.vessel }}</span>
                                         </div>
                                         <div class="text-xs text-slate-400 mt-0.5">
-                                            ETD: <strong class="text-slate-200">{{ carrier.etd }}</strong> | Biến động: <span class="text-rose-400 font-semibold">+{{ carrier.delayDays }} ngày trễ</span>
+                                            ETD kế hoạch: <strong class="text-slate-200">{{ carrier.etd }}</strong>
+                                            | ETD dự kiến: <strong class="text-rose-400">{{ carrier.actualEtd }}</strong>
+                                            (<span class="text-rose-400 font-semibold">+{{ carrier.delayDays }} ngày trễ</span>)
                                         </div>
                                     </div>
                                 </div>
@@ -323,7 +333,7 @@ html_code = """
                                 <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
                                     <div>
                                        <span class="text-slate-400 block">Giá Bán Cước ($)</span>
-                                       <input type="number" v-model.number="carrier.currentSellRate" class="w-28 bg-slate-800 border border-slate-700 rounded p-1 text-slate-100 font-bold mt-1">
+                                       <input type="number" v-model.number="carriers[index].currentSellRate" class="w-28 bg-slate-800 border border-slate-700 rounded p-1 text-slate-100 font-bold mt-1">
                                     </div>
                                     <div>
                                        <span class="text-slate-400 block">Giá Bán Tối Thiểu (Chuẩn {{ targetMargin }}%)</span>
@@ -331,19 +341,22 @@ html_code = """
                                     </div>
                                     <div>
                                        <span class="text-slate-400 block">Biên Lợi Nhuận Gộp</span>
-                                       <span class="font-bold text-amber-400">
-                                            {{ carrier.marginPercent }}% (Nhạy cảm)
+                                       <span class="font-bold" :class="carrier.marginPercent < targetMargin ? 'text-amber-400' : 'text-emerald-400'">
+                                            {{ carrier.marginPercent }}%
                                        </span>
                                     </div>
                                     <div>
                                        <span class="text-slate-400 block">Tổng Lãi Toàn Lô ({{ shipment.volume }} cont)</span>
-                                       <span class="font-bold text-emerald-400">${{ carrier.totalProfit.toLocaleString() }} USD</span>
+                                       <span class="font-bold" :class="carrier.totalProfit < 0 ? 'text-rose-400' : 'text-emerald-400'">${{ carrier.totalProfit.toLocaleString() }} USD</span>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <span class="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center gap-1.5">
+                                    <span v-if="carrier.marginPercent < targetMargin" class="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center gap-1.5">
                                         <i class="fa-solid fa-triangle-exclamation"></i> Biên lãi mỏng dưới mục tiêu
+                                    </span>
+                                    <span v-else class="px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold flex items-center gap-1.5">
+                                        <i class="fa-solid fa-circle-check"></i> Đạt biên lãi mục tiêu
                                     </span>
                                 </div>
                            </div>
@@ -425,61 +438,59 @@ html_code = """
 
     <script>
         const { createApp } = Vue;
+
+        // Dữ liệu chuẩn của case study (dùng cho khởi tạo và nút Đặt Lại)
+        const DEFAULT_SHIPMENT = {
+            shipper: 'QA Furniture Co., Ltd (Bình Phước)',
+            consignee: 'MTA Cabinets LLC (Texas)',
+            salesPerson: 'Nhập tên',
+            pol: 'Cái Mép TCIT (VNVUT)',
+            pod: 'Los Angeles, CA (USLAX)',
+            commodity: 'Wooden kitchen cabinets (HS 940340)',
+            containerType: "40'HC",
+            volume: 5,
+            preferredCarrier: 'Wan Hai Lines',
+            bookingDate: '2025-10-13',
+            etd: '2025-10-15',
+            eta: '2025-11-05'
+        };
+
         createApp({
             data() {
                 return {
                     currentTab: 'dashboard',
                     targetMargin: 10,
                     lastUpdatedTime: new Date().toLocaleTimeString(),
-                    shipment: {
-                        shipper: 'QA Furniture Co., Ltd (Bình Phước)',
-                        consignee: 'MTA Cabinets LLC (Texas)',
-                        salesPerson: 'Nhập tên',
-                        pol: 'Cái Mép TCIT (VNVUT)',
-                        pod: 'Los Angeles, CA (USLAX)',
-                        commodity: 'Wooden kitchen cabinets (HS 940340)',
-                        containerType: "40'HC",
-                        volume: 5,
-                        preferredCarrier: 'Wan Hai Lines',
-                        bookingDate: '2025-10-13',
-                        etd: 'yyyy-mm-dd',
-                        eta: 'yyyy-mm-dd'
-                    },
-                    tempShipment: {
-                        shipper: 'QA Furniture Co., Ltd (Bình Phước)',
-                        consignee: 'MTA Cabinets LLC (Texas)',
-                        salesPerson: 'Nhập tên',
-                        pol: 'Cái Mép TCIT (VNVUT)',
-                        pod: 'Los Angeles, CA (USLAX)',
-                        commodity: 'Wooden kitchen cabinets (HS 940340)',
-                        containerType: "40'HC",
-                        volume: 5,
-                        preferredCarrier: 'Wan Hai Lines',
-                        bookingDate: 'yyyy-mm-dd',
-                        etd: 'yyyy-mm-dd',
-                        eta: 'yyyy-mm-dd'
-                    },
-                    carriers: [
-                        {
-                            id: 1,
-                            name: 'Wan Hai Lines',
-                            code: 'WHL',
-                            vessel: 'WAN HAI A01 E012',
-                            etd: '2025-10-15',
-                            delayDays: 2,
-                            oceanFreight: 5230,
-                            thc: 200,
-                            sealDoc: 48,
-                            handlingPod: 90,
-                            reserveFee: 0,
-                            currentSellRate: 5438
-                        }
+                    shipment: JSON.parse(JSON.stringify(DEFAULT_SHIPMENT)),
+                    tempShipment: JSON.parse(JSON.stringify(DEFAULT_SHIPMENT)),
+
+                    // Danh sách báo giá, được tính từ rateCard bởi buildCarriers() (xem created())
+                    carriers: [],
+
+                    // BẢNG GIÁ MÔ PHỎNG: Wan Hai / 40'HC / LAX (O/F 5230) là số của case study,
+                    // các dòng còn lại là giả định. delayMin/delayMax = dải trễ tàu theo độ tin cậy lịch tàu.
+                    rateCard: [
+                        { carrier: 'Wan Hai Lines',  code: 'WHL', vessel: 'WAN HAI A01 E012',  delayMin: 1, delayMax: 4, pod: 'Los Angeles, CA (USLAX)', cont: "40'HC", of: 5230 },
+                        { carrier: 'Wan Hai Lines',  code: 'WHL', vessel: 'WAN HAI A01 E012',  delayMin: 1, delayMax: 4, pod: 'Long Beach, CA (USLGB)',  cont: "40'HC", of: 5230 },
+                        { carrier: 'Wan Hai Lines',  code: 'WHL', vessel: 'WAN HAI A01 E012',  delayMin: 1, delayMax: 4, pod: 'Los Angeles, CA (USLAX)', cont: "20'GP", of: 2900 },
+
+                        { carrier: 'Evergreen Line', code: 'EGL', vessel: 'EVER ABLE 012E',    delayMin: 0, delayMax: 2, pod: 'Los Angeles, CA (USLAX)', cont: "40'HC", of: 5200 },
+                        { carrier: 'Evergreen Line', code: 'EGL', vessel: 'EVER ABLE 012E',    delayMin: 0, delayMax: 2, pod: 'Long Beach, CA (USLGB)',  cont: "40'HC", of: 5200 },
+                        { carrier: 'Evergreen Line', code: 'EGL', vessel: 'EVER ABLE 012E',    delayMin: 0, delayMax: 2, pod: 'Los Angeles, CA (USLAX)', cont: "20'GP", of: 2850 },
+
+                        { carrier: 'COSCO Shipping', code: 'COS', vessel: 'COSCO FAITH 045E',  delayMin: 2, delayMax: 6, pod: 'Los Angeles, CA (USLAX)', cont: "40'HC", of: 5180 },
+                        { carrier: 'COSCO Shipping', code: 'COS', vessel: 'COSCO FAITH 045E',  delayMin: 2, delayMax: 6, pod: 'Long Beach, CA (USLGB)',  cont: "40'HC", of: 5180 },
+                        { carrier: 'COSCO Shipping', code: 'COS', vessel: 'COSCO FAITH 045E',  delayMin: 2, delayMax: 6, pod: 'Los Angeles, CA (USLAX)', cont: "20'GP", of: 2800 }
                     ],
+
                     marketplaceList: [
                         { id: 201, provider: 'VinaFreighter Partner', carrier: 'Evergreen', route: 'Cái Mép TCIT → Los Angeles', pol: 'Cái Mép TCIT (VNVUT)', pod: 'Los Angeles, CA (USLAX)', etd: '2026-10-14', slots: 3, price: 5200 },
                         { id: 202, provider: 'Global Logistics Corp', carrier: 'COSCO', route: 'Cái Mép TCIT → Long Beach', pol: 'Cái Mép TCIT (VNVUT)', pod: 'Long Beach, CA (USLGB)', etd: '2026-10-16', slots: 2, price: 5180 }
                     ]
                 }
+            },
+            created() {
+                this.carriers = this.buildCarriers();
             },
             computed: {
                 evaluatedCarriers() {
@@ -489,53 +500,82 @@ html_code = """
                         const profitPerCont = c.currentSellRate - totalCostPerCont;
                         const totalProfit = profitPerCont * this.shipment.volume;
                         const marginPercent = c.currentSellRate > 0 ? ((profitPerCont / c.currentSellRate) * 100).toFixed(1) : 0;
+
+                        // ETD dự kiến = ETD kế hoạch + số ngày trễ
+                        let actualEtd = '';
+                        if (c.etd) {
+                            const d = new Date(c.etd);
+                            if (!isNaN(d)) {
+                                d.setDate(d.getDate() + c.delayDays);
+                                actualEtd = d.toISOString().slice(0, 10);
+                            }
+                        }
+
                         return {
                             ...c,
                             totalCostPerCont,
                             minSellRateRequired,
                             profitPerCont,
                             totalProfit,
+                            actualEtd,
                             marginPercent: parseFloat(marginPercent)
                         };
                     });
+                },
+                // Hãng tàu đang được chọn ở form (nếu không có thì lấy hãng đầu tiên)
+                selectedCarrier() {
+                    const list = this.evaluatedCarriers;
+                    if (list.length === 0) return null;
+                    return list.find(c => c.name === this.shipment.preferredCarrier) || list[0];
                 },
                 filteredMarketplaceList() {
                     return this.marketplaceList.filter(s => s.pol.includes('Cái Mép'));
                 }
             },
             methods: {
+                // Tạo danh sách báo giá từ rateCard theo POD + loại cont của lô hàng hiện tại
+                buildCarriers() {
+                    const s = this.shipment;
+                    const matched = this.rateCard.filter(r => r.pod === s.pod && r.cont === s.containerType);
+
+                    return matched.map((r, i) => {
+                        const thc = 200, sealDoc = 48, handlingPod = 90;   // phí cố định theo case study
+                        const cost = r.of + thc + sealDoc + handlingPod;
+
+                        // Lô càng lớn càng dễ bị roll: số ngày trễ tăng theo số lượng cont (20 cont trở lên = mức tối đa)
+                        const volumeRatio = Math.min(s.volume / 20, 1);
+                        const delayDays = Math.round(r.delayMin + (r.delayMax - r.delayMin) * volumeRatio);
+
+                        return {
+                            id: i + 1,
+                            name: r.carrier,
+                            code: r.code,
+                            vessel: r.vessel,
+                            etd: s.etd,
+                            delayDays: delayDays,
+                            oceanFreight: r.of,
+                            thc, sealDoc, handlingPod,
+                            reserveFee: 0,
+                            // Giá bán mô phỏng: biên mỏng khoảng 3.8% (thấp hơn mục tiêu, đúng bối cảnh case study)
+                            currentSellRate: Math.ceil(cost / (1 - 0.038))
+                        };
+                    });
+                },
                 commitShipmentUpdate() {
                     this.shipment = JSON.parse(JSON.stringify(this.tempShipment));
-                    
-                    // ĐỒNG BỘ NGÀY ETD MỚI TỪ FORM VÀO CÁC HÃNG TÀU
-                    this.carriers.forEach(carrier => {
-                        carrier.etd = this.shipment.etd;
-                    });
+
+                    // Tính lại toàn bộ bảng giá theo lô hàng mới
+                    this.carriers = this.buildCarriers();
 
                     this.lastUpdatedTime = new Date().toLocaleTimeString();
-                    alert('Đã cập nhật thành công! Ngày ETD và toàn bộ bảng giá đã được đồng bộ.');
+                    alert('Đã cập nhật thành công! Toàn bộ bảng giá đã được tính lại.');
                     this.currentTab = 'quotation';
                 },
                 resetToDefault() {
                     this.targetMargin = 10;
-                    this.shipment = {
-                        shipper: 'QA Furniture Co., Ltd (Bình Phước)',
-                        consignee: 'MTA Cabinets LLC (Texas)',
-                        salesPerson: 'Nhập tên',
-                        pol: 'Cái Mép TCIT (VNVUT)',
-                        pod: 'Los Angeles, CA (USLAX)',
-                        commodity: 'Wooden kitchen cabinets (HS 940340)',
-                        containerType: "40'HC",
-                        volume: 5,
-                        preferredCarrier: 'Wan Hai Lines',
-                        bookingDate: '2025-10-13',
-                        etd: 'yyyy-mm-dd',
-                        eta: 'yyyy-mm-dd'
-                    };
-                    this.tempShipment = JSON.parse(JSON.stringify(this.shipment));
-                    this.carriers.forEach(carrier => {
-                        carrier.etd = this.shipment.etd;
-                    });
+                    this.shipment = JSON.parse(JSON.stringify(DEFAULT_SHIPMENT));
+                    this.tempShipment = JSON.parse(JSON.stringify(DEFAULT_SHIPMENT));
+                    this.carriers = this.buildCarriers();
                     this.lastUpdatedTime = new Date().toLocaleTimeString();
                     alert('Đã khôi phục dữ liệu mẫu chuẩn.');
                 },
