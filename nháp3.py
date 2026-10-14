@@ -118,8 +118,8 @@ html_code = """
                        <div class="text-xs text-slate-400 mb-1">Rủi Ro Trễ Tàu (Rolling Risk)</div>
                        <div class="text-2xl font-bold text-rose-400">{{ selectedCarrier ? '+' + selectedCarrier.delayDays + ' Ngày Chậm' : '—' }}</div>
                        <div class="text-[11px] text-slate-400 mt-2">
-                           ETD kế hoạch: {{ shipment.etd }}
-                           <span v-if="selectedCarrier"> → ETD dự kiến: {{ selectedCarrier.actualEtd }}</span>
+                           ETD kế hoạch: {{ shipment.etd || '—' }}
+                           <span v-if="selectedCarrier && selectedCarrier.actualEtd"> → ETD dự kiến: {{ selectedCarrier.actualEtd }}</span>
                        </div>
                    </div>
                    <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 shadow-lg">
@@ -138,7 +138,10 @@ html_code = """
                            <div><strong>Shipper / Consignee:</strong> {{ shipment.shipper }} / {{ shipment.consignee }}</div>
                            <div><strong>Mặt hàng:</strong> {{ shipment.commodity }}</div>
                            <div><strong>Booking / MBL:</strong> 039FX49604 | <strong>Vessel:</strong> {{ selectedCarrier ? selectedCarrier.vessel : 'WAN HAI A01 E012' }}</div>
-                           <div><strong>Ngày Book (Booking Date):</strong> {{ shipment.bookingDate }}</div>
+                           <div><strong>Hãng tàu:</strong> {{ shipment.preferredCarrier }} | <strong>Sales phụ trách:</strong> {{ shipment.salesPerson }}</div>
+                           <div><strong>Tuyến:</strong> {{ shipment.pol }} → {{ shipment.pod }}</div>
+                           <div><strong>Ngày Book (Booking Date):</strong> {{ shipment.bookingDate || '—' }}</div>
+                           <div><strong>ETD:</strong> {{ shipment.etd || '—' }} | <strong>ETA:</strong> {{ shipment.eta || '—' }}</div>
                            <div class="p-3 mt-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300">
                                <i class="fa-solid fa-triangle-exclamation mr-1"></i> 
                                Cảnh báo: Yêu cầu giữ chỗ đồng thời số lượng lớn đối mặt rủi ro thiếu space trầm trọng do làn sóng đẩy hàng trước chính sách thuế quan.
@@ -288,7 +291,10 @@ html_code = """
                        <h3 class="text-sm font-bold text-blue-400 flex items-center gap-2">
                            <i class="fa-solid fa-file-invoice-dollar"></i> Phân Hệ B: Báo Giá & Kiểm Soát Biên Lợi Nhuận
                        </h3>
-                       <span class="text-xs text-slate-400">Lô hàng: <strong>{{ shipment.volume }} x {{ shipment.containerType }}</strong> ({{ shipment.pol }} → {{ shipment.pod }})</span>
+                       <span class="text-xs text-slate-400 text-right leading-relaxed">
+                           Lô hàng: <strong>{{ shipment.volume }} x {{ shipment.containerType }}</strong> ({{ shipment.pol }} → {{ shipment.pod }})<br>
+                           Shipper: {{ shipment.shipper }} → Consignee: {{ shipment.consignee }} | Sales: {{ shipment.salesPerson }}
+                       </span>
                    </div>
 
                    <div class="space-y-4 w-full">
@@ -309,8 +315,8 @@ html_code = """
                                            <span v-if="carrier.name === shipment.preferredCarrier" class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">Hãng đã chọn</span>
                                         </div>
                                         <div class="text-xs text-slate-400 mt-0.5">
-                                            ETD kế hoạch: <strong class="text-slate-200">{{ carrier.etd }}</strong>
-                                            | ETD dự kiến: <strong class="text-rose-400">{{ carrier.actualEtd }}</strong>
+                                            ETD kế hoạch: <strong class="text-slate-200">{{ carrier.etd || '—' }}</strong>
+                                            | ETD dự kiến: <strong class="text-rose-400">{{ carrier.actualEtd || '—' }}</strong>
                                             (<span class="text-rose-400 font-semibold">+{{ carrier.delayDays }} ngày trễ</span>)
                                         </div>
                                     </div>
@@ -372,6 +378,11 @@ html_code = """
                    <h3 class="text-sm font-bold text-amber-400 flex items-center gap-2">
                        <i class="fa-solid fa-shield-halved"></i> Phân Hệ C: Phân Tích Rủi Ro Thiếu Hụt Space
                    </h3>
+                   <div class="text-xs p-3 rounded-xl border leading-relaxed" :class="spaceRisk.cls">
+                       Lô hàng <strong>{{ shipment.volume }} x {{ shipment.containerType }}</strong> ({{ shipment.pol }} → {{ shipment.pod }}),
+                       hãng <strong>{{ shipment.preferredCarrier }}</strong>, ETD {{ shipment.etd || '—' }}:
+                       mức rủi ro thiếu space <strong>{{ spaceRisk.label }}</strong>.
+                   </div>
                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                        <div class="bg-slate-900/70 p-4 rounded-xl border border-slate-700 space-y-2">
                            <div class="font-bold text-white text-sm">Nguyên Nhân Thiếu Space Giai Đoạn Cao Điểm</div>
@@ -393,6 +404,12 @@ html_code = """
                    <h3 class="text-sm font-bold text-amber-400 flex items-center gap-2">
                        <i class="fa-solid fa-calendar-days"></i> Phân Hệ D: Nhận Diện Mùa Cao Điểm & Bối Cảnh Chính Sách Thương Mại
                    </h3>
+                   <div v-if="leadDays !== null" class="text-xs p-3 rounded-xl border leading-relaxed"
+                        :class="leadDays >= 28 ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-rose-500/10 border-rose-500/30 text-rose-300'">
+                       Lô hàng đặt chỗ ngày <strong>{{ shipment.bookingDate }}</strong> cho ETD <strong>{{ shipment.etd }}</strong>
+                       (trước <strong>{{ leadDays }} ngày</strong>). Khuyến nghị tối thiểu 28 ngày:
+                       <strong>{{ leadDays >= 28 ? 'ĐẠT' : 'CHƯA ĐẠT, rủi ro không giữ được space' }}</strong>.
+                   </div>
                    <div class="space-y-3 text-xs text-slate-300 leading-relaxed bg-slate-900/70 p-4 rounded-xl border border-slate-700">
                        <div><strong>Sự kiện / Nguyên nhân:</strong> Làn sóng "chạy nước rút" xuất khẩu hàng hóa trước các mốc rà soát và áp thuế đối ứng.</div>
                        <div><strong>Khung thời gian cao điểm:</strong> Giai đoạn thị trường chịu áp lực cung ứng mạnh.</div>
@@ -408,7 +425,7 @@ html_code = """
                        <h3 class="text-sm font-bold text-emerald-400 flex items-center gap-2">
                            <i class="fa-solid fa-right-left"></i> Phân Hệ E: Sàn Chuyển Nhượng Slot Space (DEMO Marketplace)
                        </h3>
-                       <span class="text-xs text-slate-400">Tuyến: <strong>Cái Mép → Los Angeles</strong></span>
+                       <span class="text-xs text-slate-400">Tuyến: <strong>{{ shipment.pol }} → {{ shipment.pod }}</strong></span>
                    </div>
 
                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
@@ -425,7 +442,7 @@ html_code = """
                                 </div>
                            </div>
                            <div class="flex justify-between items-center pt-2 border-t border-slate-800">
-                                <span class="text-slate-300">Khả dụng: <strong>{{ slot.slots }} slot 40'HC</strong></span>
+                                <span class="text-slate-300">Khả dụng: <strong>{{ slot.slots }} slot {{ shipment.containerType }}</strong></span>
                                 <button @click="claimSlot(slot)" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg transition font-medium">
                                     Gửi Yêu Cầu Nhượng Slot
                                 </button>
@@ -451,9 +468,9 @@ html_code = """
             containerType: "40'HC",
             volume: 5,
             preferredCarrier: 'Wan Hai Lines',
-            bookingDate: '2025-10-13',
-            etd: '2025-10-15',
-            eta: '2025-11-05'
+            bookingDate: '',   // để trống: ô ngày hiện dd/mm/yyyy, người dùng tự chọn
+            etd: '',
+            eta: ''
         };
 
         createApp({
@@ -511,11 +528,6 @@ html_code = """
                         'Sài Gòn (VNSGN)': 150,
                         'Hải Phòng (VNHPH)': 300
                     },
-
-                    marketplaceList: [
-                        { id: 201, provider: 'VinaFreighter Partner', carrier: 'Evergreen', route: 'Cái Mép TCIT → Los Angeles', pol: 'Cái Mép TCIT (VNVUT)', pod: 'Los Angeles, CA (USLAX)', etd: '2026-10-14', slots: 3, price: 5200 },
-                        { id: 202, provider: 'Global Logistics Corp', carrier: 'COSCO', route: 'Cái Mép TCIT → Long Beach', pol: 'Cái Mép TCIT (VNVUT)', pod: 'Long Beach, CA (USLGB)', etd: '2026-10-16', slots: 2, price: 5180 }
-                    ]
                 }
             },
             created() {
@@ -557,53 +569,98 @@ html_code = """
                     if (list.length === 0) return null;
                     return list.find(c => c.name === this.shipment.preferredCarrier) || list[0];
                 },
+                // Tin đăng trên sàn tự sinh theo tuyến + loại cont + hãng + ETD của lô hàng đang chọn
                 filteredMarketplaceList() {
-                    return this.marketplaceList.filter(s => s.pol.includes('Cái Mép'));
+                    const s = this.shipment;
+                    const addDays = (d, n) => {
+                        const x = new Date(d);
+                        if (isNaN(x)) return '—';
+                        x.setDate(x.getDate() + n);
+                        return x.toISOString().slice(0, 10);
+                    };
+                    const selected = this.carrierProfiles.find(p => p.name === s.preferredCarrier) || this.carrierProfiles[0];
+                    const others = this.carrierProfiles
+                        .filter(p => p.name !== selected.name)
+                        .sort((a, b) => this.calcOceanFreight(a) - this.calcOceanFreight(b));
+                    const route = s.pol.split(' (')[0] + ' → ' + s.pod.split(' (')[0];
+                    const picks = [
+                        { provider: 'VinaFreighter Partner', p: selected,  slots: 3, dayOffset: 1, discount: 30 },
+                        { provider: 'Global Logistics Corp', p: others[0], slots: 2, dayOffset: 3, discount: 50 }
+                    ];
+                    return picks.map((x, i) => ({
+                        id: 200 + i,
+                        provider: x.provider,
+                        carrier: x.p.name,
+                        route,
+                        etd: addDays(s.etd, x.dayOffset),
+                        slots: x.slots,
+                        price: Math.max(500, this.calcOceanFreight(x.p) - x.discount)
+                    }));
+                },
+                // Mức rủi ro thiếu space theo quy mô lô hàng
+                spaceRisk() {
+                    const v = this.shipment.volume || 0;
+                    if (v >= 10) return { label: 'CAO', cls: 'bg-rose-500/10 border-rose-500/30 text-rose-300' };
+                    if (v >= 5)  return { label: 'TRUNG BÌNH', cls: 'bg-amber-500/10 border-amber-500/30 text-amber-300' };
+                    return { label: 'THẤP', cls: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' };
+                },
+                // Số ngày từ ngày book đến ETD
+                leadDays() {
+                    const b = new Date(this.shipment.bookingDate), e = new Date(this.shipment.etd);
+                    if (isNaN(b) || isNaN(e)) return null;
+                    return Math.round((e - b) / 86400000);
+                }
+            },
+            watch: {
+                // Form đổi thông tin nào thì toàn hệ thống (Dashboard, Báo Giá, Space, Marketplace...) đổi theo ngay
+                tempShipment: {
+                    deep: true,
+                    handler(v) {
+                        this.shipment = JSON.parse(JSON.stringify(v));
+                        this.carriers = this.buildCarriers();
+                        this.lastUpdatedTime = new Date().toLocaleTimeString();
+                    }
                 }
             },
             methods: {
-                // Tạo báo giá cho TẤT CẢ hãng tàu theo POL + POD + loại cont + số lượng của lô hàng hiện tại
+                // Cước biển mô phỏng của một hãng cho tuyến/loại cont của lô hàng hiện tại
+                calcOceanFreight(p) {
+                    const s = this.shipment;
+                    return Math.max(500,
+                        this.baseOceanFreight
+                        + p.adj
+                        + (this.podSurcharge[s.pod] ?? 0)
+                        + (this.contSurcharge[s.containerType] ?? 0)
+                        + (this.polSurcharge[s.pol] ?? 0)
+                    );
+                },
+                // Tạo báo giá CHỈ cho hãng tàu đã chọn trong form, theo POL + POD + loại cont + số lượng
                 buildCarriers() {
                     const s = this.shipment;
+                    const p = this.carrierProfiles.find(x => x.name === s.preferredCarrier) || this.carrierProfiles[0];
                     const is20 = s.containerType.startsWith('20');
 
-                    const list = this.carrierProfiles.map((p, i) => {
-                        const oceanFreight = Math.max(500,
-                            this.baseOceanFreight
-                            + p.adj
-                            + (this.podSurcharge[s.pod] ?? 0)
-                            + (this.contSurcharge[s.containerType] ?? 0)
-                            + (this.polSurcharge[s.pol] ?? 0)
-                        );
-                        const thc = is20 ? 150 : 200;
-                        const sealDoc = 48;
-                        const handlingPod = is20 ? 70 : 90;
-                        const cost = oceanFreight + thc + sealDoc + handlingPod;
+                    const oceanFreight = this.calcOceanFreight(p);
+                    const thc = is20 ? 150 : 200;
+                    const sealDoc = 48;
+                    const handlingPod = is20 ? 70 : 90;
+                    const cost = oceanFreight + thc + sealDoc + handlingPod;
 
-                        // Lô càng lớn càng dễ bị roll: số ngày trễ tăng theo số lượng cont (20 cont trở lên = mức tối đa)
-                        const volumeRatio = Math.min((s.volume || 1) / 20, 1);
-                        const delayDays = Math.round(p.delayMin + (p.delayMax - p.delayMin) * volumeRatio);
+                    // Lô càng lớn càng dễ bị roll: số ngày trễ tăng theo số lượng cont (20 cont trở lên = mức tối đa)
+                    const volumeRatio = Math.min((s.volume || 1) / 20, 1);
+                    const delayDays = Math.round(p.delayMin + (p.delayMax - p.delayMin) * volumeRatio);
 
-                        return {
-                            id: i + 1,
-                            name: p.name,
-                            code: p.code,
-                            vessel: p.vessel,
-                            etd: s.etd,
-                            delayDays,
-                            oceanFreight, thc, sealDoc, handlingPod,
-                            reserveFee: 0,
-                            currentSellRate: Math.ceil(cost / (1 - p.sellMargin / 100))
-                        };
-                    });
-
-                    // Hãng đã chọn trong form lên đầu, các hãng còn lại sắp theo giá vốn tăng dần
-                    const costOf = c => c.oceanFreight + c.thc + c.sealDoc + c.handlingPod;
-                    return list.sort((a, b) => {
-                        if (a.name === s.preferredCarrier) return -1;
-                        if (b.name === s.preferredCarrier) return 1;
-                        return costOf(a) - costOf(b);
-                    });
+                    return [{
+                        id: 1,
+                        name: p.name,
+                        code: p.code,
+                        vessel: p.vessel,
+                        etd: s.etd,
+                        delayDays,
+                        oceanFreight, thc, sealDoc, handlingPod,
+                        reserveFee: 0,
+                        currentSellRate: Math.ceil(cost / (1 - p.sellMargin / 100))
+                    }];
                 },
                 commitShipmentUpdate() {
                     this.shipment = JSON.parse(JSON.stringify(this.tempShipment));
