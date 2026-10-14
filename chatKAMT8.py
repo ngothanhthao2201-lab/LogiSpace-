@@ -185,7 +185,7 @@ html_code = """
                            <div>
                                <label class="text-slate-400 block mb-1">Cảng Đi (POL)</label>
                                <select v-model="tempShipment.pol" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-100">
-                                   <option value="Cái Mép (VNTOT)">Cái Mép (VNTOT)</option>
+                                   <option value="Cái Mép TCIT (VNVUT)">Cái Mép TCIT (VNVUT)</option>
                                    <option value="Cát Lái (VNCLI)">Cát Lái (VNCLI)</option>
                                    <option value="Hải Phòng (VNHPH)">Hải Phòng (VNHPH)</option>
                                    <option value="Sài Gòn (VNSGN)">Sài Gòn (VNSGN)</option>
